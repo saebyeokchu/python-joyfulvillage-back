@@ -5,7 +5,7 @@ class authSerializer(serializers.ModelSerializer) :
     eamilAddress = serializers.CharField()
     authCode = serializers.CharField()
     verified = serializers.BooleanField()
-    lastModifiedAt = serializers.DateTimeField()
+    lastModifiedAt = serializers.DateTimeField() 
 
     class Meta:
         model = auth
