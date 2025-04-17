@@ -6,8 +6,39 @@ class ProgramService :
     def getAll() :
         try : 
             print("getAll")
-            serializer = programSerializer(program.objects.order_by('id'), many=True)
+            data = program.objects.order_by('id')
+            print(data)
+            for d in data :
+                print(d.introduction)
+            serializer = programSerializer(data, many=True)
             return serializer.data
+        except :
+            return RuntimeError
+        
+    # get
+    def get_program_by_id(program_id):
+        try:
+            # Try to retrieve the room instance by its id
+            program_instance = program.objects.get(id=program_id)
+            print("program found:", program_instance)
+            
+            # Serialize the instance
+            serializer = programSerializer(program_instance)
+            print("Serialized data:", serializer.data)
+            return serializer.data
+    
+            
+        except program.DoesNotExist:
+            # This handles the case where no room is found with the given id
+            error_msg = f"No stay found with id {program_id}"
+            print(error_msg)
+            return {"error": error_msg}
+        
+        except Exception as e:
+            # Log and return any other error that might occur
+            print("Error in get_program_by_id:", e)
+            return {"error": str(e)}
+
         except :
             return RuntimeError
     
@@ -16,6 +47,7 @@ class ProgramService :
             result = program.objects.create(
                 name = data.get("name"),
                 subName = data.get("subName"),
+                introduction = data.get("introduction"),
                 content = data.get("content"),
                 img = data.get("img")
             )
@@ -38,6 +70,8 @@ class ProgramService :
             id = int(data.get("id"))
             name = data.get("name")
             subName = data.get("subName")
+            introduction = data.get("introduction")
+
             content = data.get("content")
             img = data.get("img")
 
@@ -47,12 +81,16 @@ class ProgramService :
             if subName :
                 targetProgram["subName"] = str(subName)
             
+            if introduction :
+                targetProgram["introduction"] = str(introduction)
+            
             if content :
                 targetProgram["content"] = str(content)
             
             if img :
                 targetProgram["img"] = str(img)
-
+            
+            print("introduction", targetProgram["introduction"])
 
             # Try to update existing entry
             obj, created = program.objects.update_or_create(

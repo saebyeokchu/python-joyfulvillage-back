@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:15
+    ports:  
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: joyful-village
+
+  back:
+    image: cuu2253/joyful-village-back:latest
+    ports:
+      - "8000:8000"
+    restart: always
+    container_name: back
+    environment:
+      - DJANGO_SETTINGS_MODULE=joyfulback.settings
+      - DATABASE_URL=postgresql://postgres:1234@db:5432/joyful-village
+      - MEDIA_URL=/media/
+      - MEDIA_ROOT=/app/joyfulback/media/
+    depends_on:
+      - db
+    volumes:
+      - django-media:/app/joyfulback/media  # ✅ Named volume for media storage
+    command: /entrypoint.sh
+
+volumes:
+  pg-data:
+    name : ec2-user_pg-data
+  django-media:  # ✅ Named volume for media
+    name : ec2-user_django-media

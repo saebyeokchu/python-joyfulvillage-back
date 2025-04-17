@@ -3,17 +3,19 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 
 from api import ImageApi
+from joyfulset.service.AboutService import AboutService
+from joyfulset.service.OptionService import OptionService
+from joyfulset.service.RoomService import RoomService
+from joyfulset.service.StayService import StayService
 from joyfulset.service.ProgramService import ProgramService
 from joyfulset.service.CafeService import CafeService
 from joyfulset.service.ImageArchiveService import ImageArchiveService
 from joyfulset.service.HomeService import HomeService
 from joyfulset.service.QnaService import QnaService
-from joyfulset.service.BizService import BizService
-from joyfulset.service.SoksoService import SoksoService
+from joyfulset.service.BusniessService import BusniessService
+from joyfulset.service.HeaderInfoService import HeaderInfoService
 
 
 # Create your views here.
@@ -23,6 +25,26 @@ class Home :
         try :
             return_data = HomeService.get()
             return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def getMiddleTitle(request) :
+        print("getMiddleTitle")
+        try :
+            return_data = HomeService.getMiddleTitle()
+            return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @api_view(['post'])
+    def updateMiddleTitle(request) :
+        print("updateMiddleTitle")
+        try :
+            middle_text = request.data["middle_title"]
+            if middle_text :
+                return_data = HomeService.updateMiddleTitle(middle_text)
+                return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -37,55 +59,33 @@ class Home :
             return Response({"success": False},status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @api_view(['get'])
-    def delete(request) :
+    def deleteById(request) :
+        print("deleteById")
         try :
             id = request.GET.get("id")
+            print("id : ",id)
             if id :
-                return_data = HomeService.delete(id)
+                return_data = HomeService.deleteById(id)
                 return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class About : 
-    @api_view(['post'])
-    def uploadImageWithDeletion(request) :
+    @api_view(['get'])
+    def get_by_id(request) :
+        print("[About : get_by_id]")
         try :
-            if request.method == "POST" and request.FILES.get("image"):
-                image = request.FILES["image"]
-                imageName = request.data.get("imageName") 
-                folderName = request.data.get("folderName")
-
-                external_folder_path = r"C:/Users/cuu02/OneDrive/바탕 화면/joyful/code/joyful/public/system/" + folderName
-
-                # Ensure the directory exists
-                os.makedirs(external_folder_path, exist_ok=True)
-
-                # Define the full file path
-                file_path = os.path.join(external_folder_path, imageName)
-
-                # Save the file
-                with open(file_path, 'wb') as f:
-                    for chunk in image.chunks():
-                        f.write(chunk)
-
-                # file_path = default_storage.save(f"uploads/{image.name}", ContentFile(image.read()))
-
-                # {"message": "Image uploaded successfully!", "file_path": file_path}
-                return Response(file_path, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @api_view(['post'])
-    def editMainImg(request) :
-        try :
-            return Response(status=status.HTTP_200_OK)
+            id = request.GET.get("id")
+            if id :
+                return_data = AboutService.get_about_by_id(id)
+                return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     @api_view(['get'])
-    def get(request) :
+    def getAll(request) :
         try :
-            return_data = HomeService.get()
+            return_data = AboutService.getAll()
             return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -94,28 +94,32 @@ class About :
     def getBySection(request) :
         try :
             if request.method == "GET" and request.data.get("section") :
-                return_data = HomeService.getBySection(request.data.get("section") )
+                return_data = AboutService.getBySection(request.data.get("section") )
                 return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-    @api_view(['get'])
-    def getMainImg(request) :
+    @api_view(['post'])
+    def upsert(request) : 
         try :
-            return_data = HomeService.getMainImg()
-            return Response(return_data, status=status.HTTP_200_OK)
+            print("upsetrt")
+            data = request.data.get("data")
+
+            if request.method == "POST" and data:
+                updateSuccess = AboutService.upsert(data)
+                if updateSuccess :
+                    return Response({ "success" : True }, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @api_view(['post'])
-    def updateContents(request) :
+
+    @api_view(['get'])
+    def deleteById(request) :
+        print("[deleteById]")
         try :
-            if request.method == "POST" and request.data.get("section") and request.data.get("contents"):
-                section = request.data.get("section") 
-                contents = request.data.get("contents")
-                updateSuccess = HomeService.updateContents(section, contents)
-                if updateSuccess :
-                    return Response(status=status.HTTP_200_OK)
+            id = request.GET.get("id")
+            if id :
+                return_data = AboutService.deleteById(id)
+                return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -171,6 +175,17 @@ class Cafe :
             return Response({ "success" : False },status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Program : 
+    @api_view(['get'])
+    def get_by_id(request) :
+        print("[Program : get_by_id]")
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = ProgramService.get_program_by_id(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     @api_view(['get'])
     def getAll(request) :
         try :
@@ -270,37 +285,19 @@ class Qna :
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class Biz :
+class Busniess :
     @api_view(['get'])
     def get(request) :
         try :
-            return_data = BizService.get()
+            return_data = BusniessService.get()
             return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    @api_view(['get'])
-    def getAll(request) :
-        try :
-            return_data = BizService.getAll()
-            return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @api_view(['get'])
-    def getBySection(request) :
-        try :
-            section = request.data.get("section")
-            if request.method == "GET" and section :
-                return_data = BizService.getBySection(section)
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
     @api_view(['get'])
     def getKakao(request) :
         try :
-            return_data = BizService.getKakao()
+            return_data = BusniessService.getKakao()
             return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -312,66 +309,9 @@ class Biz :
             lan = request.data.get("lan") 
             addressText = request.data.get("addressText") 
 
-            result = BizService.updateBiz(long, lan, addressText)
+            result = BusniessService.updateBiz(long, lan, addressText)
             if result : 
-                return_data = BizService.get()
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-class Sokso :
-    @api_view(['get'])
-    def getById(request) :
-        print("[getById]")
-        try :
-            id = request.GET.get("id")
-            if id :
-                return_data = SoksoService.getById(id)
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @api_view(['get'])
-    def getByLevel(request) :
-        print("[getByLevel]")
-        try :
-            level = request.GET.get("level")
-            if level :
-                return_data = SoksoService.getByLevel(level)
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @api_view(['get'])
-    def getByLevelAndGroup(request) :
-        print("[getByLevelAndGroup]")
-        try :
-            level = request.GET.get("level")
-            group = request.GET.get("group")
-            if level and group :
-                return_data = SoksoService.getByLevelAndGroup(level, group)
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @api_view(['post'])
-    def upsertSokso(request) :
-        print("[upsertSokso]")
-        try :
-            data = request.data.get("data") 
-            if data :
-                return_data = SoksoService.upsert(data)
-                return Response(return_data, status=status.HTTP_200_OK)
-        except :
-            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    @api_view(['get'])
-    def deleteById(request) :
-        print("[deleteById]")
-        try :
-            id = request.GET.get("id")
-            if id :
-                return_data = SoksoService.deleteById(id)
+                return_data = BusniessService.get()
                 return Response(return_data, status=status.HTTP_200_OK)
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -386,20 +326,27 @@ class ImageArchive :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @api_view(['post'])
-    def upload(request) :
+    def uploadImage(request) :
         try :
-            if request.method == "POST" and request.FILES.get("image"):
+            print("uploadImage")
+
+            if request.method == "POST" and request.FILES["image"]:
                 image = request.FILES["image"]
                 imageName = request.data.get("imageName") 
                 print(imageName)
+
                 imageUploadResult = ImageApi.upload_image(image, imageName)
 
                 if imageUploadResult :
-                    newFileName = imageUploadResult["new_image_name"]
+                    new_image_name = imageUploadResult["new_image_name"]
+                    image_url = imageUploadResult["image_url"]
+
                     # add image to database
-                    createResult = ImageArchiveService.create(newFileName)
-                    return Response(createResult, status=status.HTTP_200_OK)
-                return Response(newFileName, status=status.HTTP_200_OK)
+                    create_result = ImageArchiveService.create(new_image_name)
+                    return Response(
+                        create_result,
+                        status=status.HTTP_200_OK
+                    )
         except :
             return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -438,3 +385,184 @@ class ImageArchive :
                         return Response(returnData, status=status.HTTP_200_OK)
         except :
             return Response({ "success" : False },status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class Stay :
+    @api_view(['get'])
+    def getById(request) :
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = StayService.get_stay_by_id(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def getAll(request) :
+        try :
+            return_data = StayService.getAll()
+            return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['post'])
+    def upsertStay(request) :
+        print("[upsertStay]")
+        try :
+            data = request.data.get("data") 
+            if data :
+                return_data = StayService.upsert(data)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def deleteById(request) :
+        print("[deleteById]")
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = StayService.deleteById(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class Option :
+    @api_view(['get'])
+    def getById(request) :
+        try :
+            print("getById")
+            id = request.GET.get("id")
+            if id :
+                return_data = OptionService.getById(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR) 
+    
+
+    @api_view(['get'])
+    def getAll(request) :
+        try :
+            return_data = OptionService.getAll()
+            return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR) 
+    
+    @api_view(['get'])
+    def getByStayId(request) :
+        try :
+            stay_id = request.GET.get("id")
+            if stay_id :
+                return_data = OptionService.getByStayId(stay_id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['post'])
+    def upsertOption(request) :
+        print("[upsertOption]")
+        try :
+            data = request.data.get("data") 
+            if data :
+                return_data = OptionService.upsert(data)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def deleteById(request) :
+        print("[deleteById]")
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = OptionService.deleteById(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class Room :
+    @api_view(['get'])
+    def getById(request) :
+        try :
+            id = request.GET.get("id")
+            print("[id]",id)
+            if id :
+                return_data = RoomService.get_room_by_id(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def getAll(request) :
+        print("[getAll]")
+        try :
+            return_data = RoomService.getAll()
+            return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @api_view(['get'])
+    def getByStayId(request) :
+        try :
+            stay_id = request.GET.get("id")
+            if stay_id :
+                return_data = RoomService.getByStayId(stay_id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+   
+    @api_view(['post'])
+    def upsertRoom(request) :
+        print("[upsertRoom]")
+        try :
+            data = request.data.get("data") 
+            print(data)
+            if data :
+                return_data = RoomService.upsert(data)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def deleteById(request) :
+        print("[deleteById]")
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = RoomService.deleteById(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class HeaderInfo : 
+    @api_view(['get'])
+    def get_info_by_id(request) :
+        print("[AbHeaderInfoout : get_info_by_id]")
+        try :
+            id = request.GET.get("id")
+            if id :
+                return_data = HeaderInfoService.get_info_by_id(id)
+                return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['get'])
+    def getAll(request) :
+        try :
+            return_data = HeaderInfoService.getAll()
+            return Response(return_data, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @api_view(['post'])
+    def upsert(request) : 
+        try :
+            data = request.data.get("data")
+
+            if request.method == "POST" and data:
+                updateSuccess = HeaderInfoService.upsert(data)
+                if updateSuccess :
+                    return Response({ "success" : True }, status=status.HTTP_200_OK)
+        except :
+            return Response(status = status.HTTP_500_INTERNAL_SERVER_ERROR)

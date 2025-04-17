@@ -1,39 +1,93 @@
 import os
-from django.utils import timezone
+from django.conf import settings
 
-image_path = r"C:/Projects/joyful/code/joyful/public/images/"
+# IMAGE_UPLOAD_PATH = r"C:/Projects/joyful/code/joyful/public/images/"
+# IMAGE_UPLOAD_PATH = os.getenv("IMAGE_UPLOAD_PATH", "/code/public/images")
 
-def upload_image(image, imageName) :
-    global image_path
-    print("upload_image")
-    try :
-        # Ensure the directory exists
-        os.makedirs(image_path, exist_ok=True)
-        file_extension = os.path.splitext(image.name)[1]  # Extracts '.jpg', '.png', etc.
-        # create image name with current time
-        # new_image_name =  timezone.now().strftime("%Y_%m_%d_%H_%S_%f") + file_extension
-        new_image_name =  imageName + file_extension
-        # new_image_name = image.name
+def upload_image(image, imageName):
+    """
+    Upload an image to the MEDIA_ROOT directory and return its accessible URL.
+    
+    Parameters:
+        image (InMemoryUploadedFile): The uploaded image file.
+        imageName (str): The base name to save the image as (without extension).
+    
+    Returns:
+        dict: Contains 'result', 'new_image_name', and 'image_url' if successful.
+    """
+    try:
+        # Ensure the media directory exists
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+        print(f"Media directory created at: {settings.MEDIA_ROOT}")
+        # Extract the file extension from the uploaded image
+        file_extension = os.path.splitext(image.name)[1]  # e.g., '.jpg', '.png'
+        
+        # Generate the new image file name
+        new_image_name = imageName + file_extension
+
         print("new_image_name",new_image_name)
-
-        # Define the full file path
-        file_path = os.path.join(image_path, new_image_name) 
+        
+        # Create the full file system path where the image will be saved
+        file_path = os.path.join(settings.MEDIA_ROOT, new_image_name)
         print("file_path",file_path)
-
-        # Save the file
+        
+        # Save the file in chunks (good for large files)
         with open(file_path, 'wb') as f:
             for chunk in image.chunks():
                 f.write(chunk)
-
-        return { "result" : True, "new_image_name" : new_image_name }
+        
+        
+        # Generate the publicly accessible URL using MEDIA_URL
+        # If your backend domain is, for example, http://backend:8000, you might prepend that
+        image_url = settings.MEDIA_URL + new_image_name
+        print("image_url",image_url)
+        
+        return {
+            "result": True,
+            "new_image_name": new_image_name,
+            "image_url": image_url
+        }
+    
     except Exception as e:
         print(f"Error uploading image: {e}")
-        return {"result": False, "error": str(e)}
+        return {
+            "result": False,
+            "error": str(e)
+        }
+
+# def upload_image(image, imageName) :
+#     global IMAGE_UPLOAD_PATH
+#     print("upload_image")
+#     try :
+#         # Ensure the directory exists
+#         os.makedirs(IMAGE_UPLOAD_PATH, exist_ok=True)
+#         file_extension = os.path.splitext(image.name)[1]  # Extracts '.jpg', '.png', etc.
+#         # create image name with current time
+#         # new_image_name =  timezone.now().strftime("%Y_%m_%d_%H_%S_%f") + file_extension
+#         new_image_name =  imageName + file_extension
+#         # new_image_name = image.name
+#         print("new_image_name",new_image_name)
+
+#         # Define the full file path
+#         file_path = os.path.join(IMAGE_UPLOAD_PATH, new_image_name) 
+#         print("file_path",file_path)
+
+#         # Save the file
+#         with open(file_path, 'wb') as f:
+#             for chunk in image.chunks():
+#                 f.write(chunk)
+
+#         return { "result" : True, "new_image_name" : new_image_name }
+#     except Exception as e:
+#         print(f"Error uploading image: {e}")
+#         return {"result": False, "error": str(e)}
 
 def replace_image(existing_image_path, new_image):
     try:
         # ✅ Check if the old image exists, then delete it
-        file_path = os.path.join(image_path, existing_image_path)
+        # file_path = os.path.join(IMAGE_UPLOAD_PATH, existing_image_path)
+        file_path = os.path.join(settings.MEDIA_ROOT, existing_image_path)
+
         print("replace_image")
         print(file_path)
         if os.path.exists(existing_image_path):
@@ -64,17 +118,13 @@ def replace_image(existing_image_path, new_image):
         return {"result": False, "error": str(e)}
 
 def delete_image(image_name):
-    global image_path
 
     try:
         # Ensure the directory exists
-        os.makedirs(image_path, exist_ok=True)
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
 
         # Define the full file path
-        file_path = os.path.join(image_path, image_name)
-
-        print("image_path",image_path)
-        print("file_path",file_path)
+        file_path = os.path.join(settings.MEDIA_ROOT, image_name)
         
         if os.path.exists(file_path):  # ✅ Check if file exists
             os.remove(file_path)  # ✅ Delete the file

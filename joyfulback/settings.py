@@ -11,11 +11,17 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+import environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+# STATIC_URL = "/static/"
+# STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -25,18 +31,51 @@ SECRET_KEY = 'django-insecure-76k=j4_vxnz$e)_74+*70)2q19ll77cebgv2zw&8yvi@f9l18r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','joyvil.com','127.0.0.1','localhost:3000']
+ALLOWED_HOSTS = ['localhost','joyvil.com','127.0.0.1','localhost:3000','back.joyvil.com']
 
-CORS_ORIGIN_ALLOW_ALL = True
-# CORS_REPLACE_HTTPS_REFERER = True
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://joyvil.com',
-    'http://localhost'
+CORS_ALLOW_ALL = False  # ✅ Restrict access to allowed origins only
+
+# ✅ Allow only specific frontend domains to access Django backend
+CORS_ALLOWED_ORIGINS = [
+    "https://joyvil.com",
+    "https://www.joyvil.com",
+    "https://back.joyvil.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
-CORS_ALLOW_HEADERS = [ "accept", "referer", "accept-encoding", "authorization", "content-type", "dnt", "origin", "user-agent", "x-csrftoken", "x-sessionid", "x-requested-with"]
+
+# ✅ Allowed HTTP methods for cross-origin requests
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+# ✅ Allowed headers in cross-origin requests
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# ✅ Allow credentials (cookies, authentication headers)
+CORS_ALLOW_CREDENTIALS = True
+
+# ✅ Set trusted origins for CSRF protection
+CSRF_TRUSTED_ORIGINS = [
+    "https://joyvil.com",
+    "https://www.joyvil.com",
+    "https://back.joyvil.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 CORS_EXPOSE_HEADERS = ['Set-Cookie']
 
 # Application definition
@@ -50,7 +89,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders'
+    'corsheaders',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
@@ -88,16 +128,28 @@ WSGI_APPLICATION = 'joyfulback.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('POSTGRES_DB'),
+#         'USER': env('POSTGRES_USER'),
+#         'PASSWORD': env('POSTGRES_PW'), 
+#         'HOST': env('POSTGRES_HOST'), 
+#         'PORT': env('POSTGRES_PORT'),
+#     }
+# }
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'joyful', 
-        'USER': 'joyful',
-        'PASSWORD': 'joyful',
-        'HOST': 'localhost', 
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "joyful-village",
+        "USER": "joyful",
+        "PASSWORD": "joyful",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
+
 
 FILE_CHARSET = 'utf-8'
 DEFAULT_CHARSET = 'utf-8'
@@ -138,7 +190,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
+# Static & Media Files (Common Settings)
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
